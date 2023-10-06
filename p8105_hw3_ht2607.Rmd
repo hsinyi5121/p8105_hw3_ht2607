@@ -1,0 +1,59 @@
+---
+title: "p8105_hw3_ht2607"
+output: github_document
+---
+
+## Question 1
+
+This problem is using the Instacart data. However, I did not download the dataset into my local data directory; instead, I loaded the data from the p8105.datasets using the below code.
+```{r}
+library(p8105.datasets)
+data("instacart")
+```
+
+In the "instacart" dataset, there is total 1384617 observation and 15 variables. Key variables such as order_id (numeric), aisle_id (numeric), aisel (character), product_id (numeric), order_number (numeric), product_name (character), and order_hour_of_day  (numeric). 
+
+Need to answer: 
+How many aisles are there, and which aisles are the most items ordered from?
+Make a plot that shows the number of items ordered in each aisle, limiting this to aisles with more than 10000 items ordered. Arrange aisles sensibly, and organize your plot so others can read it.
+Make a table showing the three most popular items in each of the aisles “baking ingredients”, “dog food care”, and “packaged vegetables fruits”. Include the number of times each item is ordered in your table.
+Make a table showing the mean hour of the day at which Pink Lady Apples and Coffee Ice Cream are ordered on each day of the week; format this table for human readers (i.e. produce a 2 x 7 table).
+
+
+## Question 2
+
+```{r}
+library(p8105.datasets)
+library(tidyverse)
+library(httr)
+library(jsonlite)
+
+var_names = 
+  GET("https://chronicdata.cdc.gov/views/acme-vg9e.json") %>%
+  content("text") %>%
+  fromJSON() %>% 
+  .[["columns"]] %>% 
+  .[["name"]] %>% 
+  .[1:22]
+
+brfss_smart2010 = 
+  GET("https://chronicdata.cdc.gov/views/acme-vg9e/rows.json") %>% 
+  content("text") %>%
+  fromJSON() %>% 
+  .[["data"]]
+
+row_as_tibble = function(row_as_list, var_names) {
+  var_list = row_as_list[9:30]
+  names(var_list) = var_names 
+  var_list[sapply(var_list, is.null)] <- NULL
+  as_tibble(var_list, validate = FALSE)
+}
+
+brfss_smart2010 = 
+  brfss_smart2010 %>% 
+  map(.x = ., ~row_as_tibble(.x, var_names)) %>% 
+  bind_rows
+```
+
+
+
