@@ -47,13 +47,15 @@ Step 4: include only responses from “Excellent” to “Poor”
 
 ```{r}
 overall_health_ep=
-  filter(overall_health_df, response == "Poor" | response == "Excellent")
+  filter(overall_health_df, response == "Excellent" | response == "Very good" | response == "Good" | response == "Fair" | response == "Poor") |>
+  mutate(name = forcats::fct_relevel(response, c("Excellent", "Very good", "Good", "Fair", "Poor")))
 ```
 
 Step 5: organize responses as a factor taking levels ordered from “Poor” to “Excellent”
 
 ```{r}
-overall_health_ep$response = as.factor(overall_health_ep$response)
+overall_health_ep |> 
+  mutate(nameback = forcats::fct_relevel(response, c("Poor", "Fair", "Good", "Very good", "Excellent")))
 ```
 
 Answering questions:
@@ -63,7 +65,7 @@ In this code chuck, I filtered the dataframe to 2002, and group by the locationa
 
 ```{r}
 q1 =
-  filter(overall_health_df, year == "2002") |> 
+  filter(overall_health_ep, year == "2002") |> 
   group_by(locationabbr) |> 
   summarize(loc = n_distinct(locationdesc)) |> 
   filter(loc >= 7)
@@ -75,7 +77,7 @@ In 2002, states that were observed at 7 or more locations are CT, FL, MA, NC, NJ
 In this code chuck, I did the similar step as I described for 2002.
 ```{r}
 q1_b =
-  filter(overall_health_df, year == "2010") |> 
+  filter(overall_health_ep, year == "2010") |> 
   group_by(locationabbr) |> 
   summarize(loc = n_distinct(locationdesc)) |> 
   filter(loc >= 7)
@@ -88,7 +90,7 @@ Construct a dataset that is limited to Excellent responses, and contains, year, 
 
 ```{r}
 q1_c=
-  select(overall_health_df, year, locationabbr, response, data_value) |> 
+  select(overall_health_ep, year, locationabbr, response, data_value) |> 
   filter(response == "Excellent")
 ```
 
@@ -132,7 +134,100 @@ q1_d
 
 ## Question 3
 
-```{r}
+Step 1: imported and loaded both csv files. Also, tidy, merge, and otherwise organize the data sets. Your final dataset should include all originally observed variables; exclude participants less than 21 years of age, and those with missing demographic data. In addition, encode data with reasonable variable classes (i.e. not numeric, and using factors with the ordering of tables and plots in mind). 
 
+```{r}
+library(tidyverse)
+accel = read_csv(file = "./q3data/nhanes_accel.csv", na = "NA") |>
+  janitor::clean_names() |> 
+  pivot_longer(
+    min1:min1440,
+    names_to = "minutes", 
+    values_to = "mins")
+    
+covar = read_csv(file = "./q3data/nhanes_covar.csv", skip = 4, na = "NA") |>
+  janitor::clean_names() |> 
+  filter(age >= 21 | is.na(age)) |> 
+  drop_na() |> 
+  mutate(
+    sex = 
+      case_match(
+        sex, 
+        1 ~ "male", 
+        2 ~ "female"),
+    sex = as.factor(sex)) |> 
+  mutate(
+    education = 
+      case_match(
+        education, 
+        1 ~ "less than high school", 
+        2 ~ "high school equivalent", 
+        3 ~ "more than high school"),
+    education = as.factor(education)) |> 
+   mutate(school = forcats::fct_relevel(education, c("less than high school", "high school equivalent", "more than high school")))
+
+q3tidy_df = 
+  inner_join(covar, accel, by = "seqn")
+```
+
+Step 2: 
+Produce a reader-friendly table for the number of men and women in each education category
+
+```{r}
+covar |> 
+  count(sex, education) |> 
+  pivot_wider(
+  names_from = sex, 
+  values_from = n) |> 
+  janitor::clean_names() |> 
+knitr::kable()
+```
+
+Step 3: create a visualization of the age distributions for men and women in each education category
+
+```{r}
+covar |> 
+ ggplot(aes(x = age, fill = sex)) +
+  geom_density(alpha = .5) + 
+  facet_grid(education ~ .) + 
+  labs(
+    x = "Age",
+    y = "Count",
+    title = "Age distributions for men and women in each education category"
+  ) 
+  viridis::scale_fill_viridis(discrete = TRUE)
+```
+
+Plot these total activities (y-axis) against age (x-axis); your plot should compare men to women and have separate panels for each education level. Include a trend line or a smooth to illustrate differences. 
+```{r}
+q3tidy_df|> 
+  group_by(education, sex, age) |> 
+  summarise(Total_Activity = sum(mins)) |> 
+  ggplot(aes(x = age, y = Total_Activity, color = sex)) + 
+    geom_point(alpha = .5) +
+    geom_smooth(se = FALSE) + 
+    facet_grid(education ~ .) +
+    labs(
+      x = "Age",
+      y = "Total Activity",
+      title = "Total Activity vs. Age by Education Level and Gender"
+   )
+    theme(legend.position = "bottom")
+```
+
+Make a three-panel plot that shows the 24-hour activity time courses for each education level and use color to indicate sex.
+
+```{r}
+q3tidy_df |> 
+  ggplot(aes(x = 1:1440, y = mins, color = sex)) +
+    geom_point(alpha = .5)
+    geom_boxplot() +
+    facet_grid(education ~ .)
+    labs(
+      x = "Minute of the Day",
+      y = "mins",
+      title = "24-Hour Activity Time Courses by Education Level and Sex"
+    ) +
+   theme(legend.position = "bottom")
 ```
 
