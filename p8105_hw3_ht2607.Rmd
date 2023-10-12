@@ -109,6 +109,7 @@ q1_c |>
   ) +
    theme(legend.position = "bottom")
 ```
+The spaghetti plot shows that there is not much different by States' average data value over time. However, it looks like WY has a dramatic change from 2004 to 2010. 
 
 Make a two-panel plot showing, for the years 2006, and 2010, distribution of data_value for responses (“Poor” to “Excellent”) among locations in NY State.
 
@@ -131,6 +132,7 @@ q1_d=
 
 q1_d
 ```
+From the two panel plot, we can see that majority of the responses for the services from 2006 to 2010 are fall under excellent, very good, and good. However, we do see that there are less than 20 of data value that responses fair in 2006. In addition, there is less than 10 data values that have response of poor in both 2006 and 2010. 
 
 ## Question 3
 
@@ -175,13 +177,14 @@ Produce a reader-friendly table for the number of men and women in each educatio
 
 ```{r}
 covar |> 
-  count(sex, education) |> 
+  count(sex, school) |> 
   pivot_wider(
   names_from = sex, 
   values_from = n) |> 
   janitor::clean_names() |> 
 knitr::kable()
 ```
+We can see that majority of the numbers of men and women are fall within the more than high school education category. Also, there are more males compared to females in the  high school equivalent category. Lastly, in the less than high school category, the numbers of female and male are relatively the same. 
 
 Step 3: create a visualization of the age distributions for men and women in each education category
 
@@ -197,6 +200,7 @@ covar |>
   ) 
   viridis::scale_fill_viridis(discrete = TRUE)
 ```
+In the visualization of the age distribution for men and women in each education category, we can see that more females that is less than age of 50 are in the more than high school education category. Also, we can see that there is more females that age more than 60 are in the high school equivalent education category. Additionally, there is more males that age less than 50 are in the high school equivalent education category. 
 
 Plot these total activities (y-axis) against age (x-axis); your plot should compare men to women and have separate panels for each education level. Include a trend line or a smooth to illustrate differences. 
 ```{r}
@@ -214,20 +218,22 @@ q3tidy_df|>
    )
     theme(legend.position = "bottom")
 ```
+In the "Total activity vs age by education level and gender" graph, we can see the among the high school equivalent education group, the trend of total activity has increase, specifically from the age 70 and above. However, in the less than high school education group, the trend of total activity decrease particularly for male that is age 60 and above. However, there are higher total activity among those who is under age of 50 in the more than high school education group. 
 
 Make a three-panel plot that shows the 24-hour activity time courses for each education level and use color to indicate sex.
 
 ```{r}
 q3tidy_df |> 
-  ggplot(aes(x = 1:1440, y = mins, color = sex)) +
-    geom_point(alpha = .5)
-    geom_boxplot() +
-    facet_grid(education ~ .)
+  ggplot(aes(x = minutes, y = mins, color = sex)) +
+    geom_point(alpha = .5) +
+  geom_smooth(se = FALSE) +
+    facet_grid(education ~ .) +
     labs(
       x = "Minute of the Day",
       y = "mins",
       title = "24-Hour Activity Time Courses by Education Level and Sex"
     ) +
    theme(legend.position = "bottom")
-```
 
+```
+Based on this graph, we can conclude that there are more males in the high school equivalent education category compared to females in the 24 hours activity time courses. However, more females compared to males in the more than high school education category in the 24 hours activity time courses.
