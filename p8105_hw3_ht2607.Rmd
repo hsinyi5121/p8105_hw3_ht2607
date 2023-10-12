@@ -247,7 +247,7 @@ covar = read_csv(file = "./q3data/nhanes_covar.csv", skip = 4, na = "NA") |>
    mutate(school = forcats::fct_relevel(education, c("less than high school", "high school equivalent", "more than high school")))
 
 q3tidy_df = 
-  inner_join(covar, accel, by = "seqn")
+  left_join(covar, accel, by = "seqn")
 ```
 
 Step 2: 
